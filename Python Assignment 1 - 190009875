@@ -1,0 +1,140 @@
+from tabulate import tabulate
+
+def read_tree_names(tree_file_path):
+    trees = []
+    with open(tree_file_path, 'r') as file:
+        for line in file:
+            trees.append(line.strip())
+    return trees
+
+def tokenize_name(tree):
+    words = [word.strip("'") for word in tree.split()]
+    words_uppercase = [word.upper() for word in words]
+    return words_uppercase
+
+def read_values_file(values_file_path):
+    values_dict = {}
+    with open(values_file_path, 'r') as file:
+        for line in file:
+            letter, value = line.split()
+            values_dict[letter] = int(value)
+    return values_dict
+
+def calculate_letter_score(letter, values_dict, tree):
+    words = tokenize_name(tree)
+
+    rarity_value = 0
+
+    for word in words:
+        position = word.find(letter) + 1
+
+        if position == 1:
+            rarity_value = values_dict.get(letter, 0)
+        elif position == len(word):
+            if letter == 'E':
+                rarity_value = 20
+            else:
+                rarity_value = 5
+
+        if 1 < position < len(word):
+            rarity_value = values_dict.get(letter, 0)
+
+    return rarity_value
+
+def generate_abbreviations_with_values(trees, values_dict):
+    tree_and_abbreviations_with_values = []
+
+    # arranges the tree names in alphabetical order
+    trees.sort()
+
+    for tree in trees:
+        words = tokenize_name(tree)
+
+        if words:
+            first_letter = tree[0]
+
+            for word in words:
+                if len(word) >= 3:
+                    for i in range(len(word) - 2):
+                        for j in range(i + 1, len(word) - 1):
+                            if word[i] != first_letter:
+                                abbreviation = (first_letter + word[i] + word[j])
+
+                                position = word.find(word[i]) + 1
+                                position_value_1 = 1 if position == 2 else (2 if position == 3 else 3)
+
+                                position = word.find(word[j]) + 1
+                                position_value_2 = 1 if position == 2 else (2 if position == 3 else 3)
+
+                                position_value = position_value_1 + position_value_2
+
+                                second_let_score = calculate_letter_score(word[i], values_dict, tree)
+                                third_let_score = calculate_letter_score(word[j], values_dict, tree)
+
+                                abbreviation_score = second_let_score + third_let_score + position_value
+
+                                tree_and_abbreviations_with_values.append((abbreviation, abbreviation_score, tree))
+
+    return tree_and_abbreviations_with_values
+
+trees_file_path = ('/Users/CCumm/OneDrive/Documents/AC50002/Python Assignment/trees.txt')
+values_file_path = ('/Users/CCumm/OneDrive/Documents/AC50002/Python Assignment/values.txt')
+
+trees = read_tree_names(trees_file_path)
+values_dict = read_values_file(values_file_path)
+
+all_abbreviations = []
+
+for tree in trees:
+    abbreviations_for_tree = generate_abbreviations_with_values([tree], values_dict)
+    all_abbreviations.extend(abbreviations_for_tree)
+
+table_data = []
+for entry in sorted(all_abbreviations, key=lambda x: x[1]):
+    abbr, score, current_name = entry
+    table_data.append([current_name, abbr.upper(), score])
+
+table_data_sorted = sorted(table_data, key=lambda x: x[0])
+
+table_headings = ["Name", "Abbreviation", "Score"]
+print(tabulate(table_data_sorted, headers=table_headings, tablefmt="rounded_grid"))
+
+
+def main():
+    try:
+        input_filename = input("Enter the input file name: ")
+        output_filename = "Cumming_trees_abbrev.txt"
+
+        trees = read_tree_names(input_filename)
+        values_dict = read_values_file('/Users/CCumm/OneDrive/Documents/AC50002/Python Assignment/values.txt')
+
+        all_abbreviations = []
+
+        for tree in trees:
+            abbreviations_for_tree = generate_abbreviations_with_values([tree], values_dict)
+            all_abbreviations.extend(abbreviations_for_tree)
+
+        table_data = []
+        for entry in sorted(all_abbreviations, key=lambda x: x[1]):
+            abbr, score, current_name = entry
+            table_data.append([current_name, abbr.upper(), score])
+
+        table_data_sorted = sorted(table_data, key=lambda x: x[0])
+
+        table_headings = ["Name", "Abbreviation", "Score"]
+        print(tabulate(table_data_sorted, headers=table_headings, tablefmt="rounded_grid"))
+
+        with open(output_filename, 'w') as output_file:
+            for entry in all_abbreviations:
+                abbreviation, score, current_name = entry
+                output_file.write(f"{current_name} {abbreviation} {score}\n")
+
+        print(f"Results written to {output_filename}")
+
+    except FileNotFoundError:
+        print(f"Error: File '{input_filename}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    main()
