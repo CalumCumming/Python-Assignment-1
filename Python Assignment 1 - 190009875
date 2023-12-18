@@ -108,22 +108,6 @@ def main():
         trees = read_tree_names(input_filename)
         values_dict = read_values_file('/Users/CCumm/OneDrive/Documents/AC50002/Python Assignment/values.txt')
 
-        all_abbreviations = []
-
-        for tree in trees:
-            abbreviations_for_tree = generate_abbreviations_with_values([tree], values_dict)
-            all_abbreviations.extend(abbreviations_for_tree)
-
-        table_data = []
-        for entry in sorted(all_abbreviations, key=lambda x: x[1]):
-            abbr, score, current_name = entry
-            table_data.append([current_name, abbr.upper(), score])
-
-        table_data_sorted = sorted(table_data, key=lambda x: x[0])
-
-        table_headings = ["Name", "Abbreviation", "Score"]
-        print(tabulate(table_data_sorted, headers=table_headings, tablefmt="rounded_grid"))
-
         with open(output_filename, 'w') as output_file:
             for entry in all_abbreviations:
                 abbreviation, score, current_name = entry
